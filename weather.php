@@ -1,8 +1,47 @@
 <?php
-// global variable tobe used to display data
+
+/**
+ * This program is Weather forecast web application for coding assisment.
+ * You can redistribute it and/or modify except api keys.
+ *
+ * Used following API:  
+ * 
+ *      Google Maps Platform -> Web services -> Geocoding API
+ *      https://developers.google.com/maps/documentation/geocoding/intro
+ *      Provide Location name in English
+ * 
+ *      Google Maps Platform -> Web -> Maps Static API
+ *      https://developers.google.com/maps/documentation/maps-static/dev-guide
+ *
+ *      Google Maps Platform -> Web -> Maps Embed API
+ *      https://developers.google.com/maps/documentation/embed/guide
+ *
+ *      Yahoo! Geocoder API 
+ *      https://developer.yahoo.co.jp/webapi/map/openlocalplatform/v1/geocoder.html
+ *      Provide Location name in Japanese
+ * 
+ *      Open Weather -> Weather API
+ *      https://openweathermap.org/forecast5
+ *      Provide 5 days forecast by every 3 hours record
+ * 
+ *      Weatherbit.io -> Weather API
+ *      https://www.weatherbit.io/api/weather-forecast-16-day
+ *      Provide 16 days forecast by daily
+ * 
+ *      Japan COVID-19 Coronavirus Tracker - https://covid19japan.com/
+ *      https://github.com/reustle/covid19japan-data/
+ * 
+ * Author: Enkhbaatar
+ *
+ * @file
+ */
+
+// global variable to be used to store and display data
 $area = null;
 
-// Class to store data retreived from the API
+/**
+ * Class to get and store data for APIs
+ */
 class Area
 {
     private $postcode = '';   // postcode to search a location
@@ -16,7 +55,11 @@ class Area
     public $errorMsg = '';   // error messages to display
     public $prefecture = '';  // prefecture name used to get Covid19 data
 
-    // send GET request to API providers using curl
+    /**
+    * send GET request to API providers using curl
+    *
+    * @return string 
+    */
     private function callAPI($url)
     {
         $curl = curl_init();
@@ -27,13 +70,21 @@ class Area
         return $result;
     }
 
-    // display MAP depends on selection
+    /**
+    * display MAP depends on selection
+    *
+    * @return boolean 
+    */
     public function showMap()
     {
         return $this->maptype === 'Embed MAP' ? $this->showEmbedMap() : $this->showStaticMap();
     }
 
-    // set customized selection for map, unit, api providers 
+    /**
+    * set customized selection for map, unit and api providers
+    *
+    * @return void 
+    */ 
     public function setConfig()
     {
         $this->postcode = isset($_POST['postcode']) ? htmlspecialchars($_POST['postcode']) : '000-0000';
@@ -43,19 +94,31 @@ class Area
         $this->apiWeather = isset($_POST['apiWeather']) ? htmlspecialchars($_POST['apiWeather']) : 'OpenWeatherMap';
     }
 
-    // call selected api to find a location
+    /**
+    * call selected api to find a location
+    *
+    * @return boolean 
+    */ 
     public function getLocation()
     {
         return $this->apiLocation === 'Yahoo' ? $this->getLocationYahoo() : $this->getLocationGoogle();
     }
 
-    // call selected api to find a location        
+    /**
+    * call selected api to get a weather forecast
+    *
+    * @return boolean 
+    */       
     public function getWeather()
     {
         return $this->apiWeather === 'WeatherBit.io' ? $this->getWeatherBit() : $this->getOpenWeatherMap();
     }
 
-    // call google geocoding API to get coordinates of location. 
+    /**
+    * call google geocoding API to get coordinates of location.
+    * 
+    * @return boolean 
+    */
     private function getLocationGoogle()
     {
         $url = 'https://maps.googleapis.com/maps/api/geocode/json';   // api url
@@ -67,7 +130,11 @@ class Area
         return $result ? $this->extractGoogleResult(json_decode($result)) : false;
     }
 
-    // call Yahoo geocoding API to get coordinates of location. 
+    /**
+    * call Yahoo geocoding API to get coordinates of location. 
+    *
+    * @return boolean 
+    */
     private function getLocationYahoo()
     {
         $url = 'https://map.yahooapis.jp/search/zip/V1/zipCodeSearch';  // api url
@@ -81,7 +148,12 @@ class Area
         return $result ? $this->extractYahooResult(json_decode($result)) : false;
     }
 
-    // call WeatherBit weather API to get forecast data. Provide daily forecast data.  
+    /**
+    * call WeatherBit weather API to get forecast data.   
+    * API response will be daily forecast data.
+    *
+    * @return boolean 
+    */
     private function getWeatherBit()
     {
         $url = 'https://api.weatherbit.io/v2.0/forecast/daily';
@@ -94,7 +166,12 @@ class Area
         return $result ? $this->extractWeatherBitResult(json_decode($result)) : false;
     }
 
-    // call OpenWeatherMap weather API to get forecast data. Provide 3 hours forecast data.  
+    /**
+    * call OpenWeatherMap weather API to get forecast data.   
+    * API response will be 3 hourly forecast data.
+    *
+    * @return boolean 
+    */
     private function getOpenWeatherMap()
     {
         $url = 'https://api.openweathermap.org/data/2.5/forecast';
@@ -106,46 +183,13 @@ class Area
         return $result ? $this->extractOpenWeatherMapResult(json_decode($result)) : false;
     }
 
-    // call url to get Covid19 latest data 
-    public function getCovid19data()
-    {
-        // if prefecture is not found from location, don't process covid19 data
-        if ($this->prefecture ==='') {
-            return false;
-        }
-        // url to get covid19 json data
-        $url = 'https://data.covid19japan.com/summary/latest.json';
-        $result = $this->callAPI($url);
-        return $result ? $this->extractCovid19Result(json_decode($result)) : false;
-    }
-
-    // extract covid19 data
-    private function extractCovid19Result($json)
-    {
-        // check main data field "prefectures"
-        if (!isset($json->prefectures)) {
-            $this->errorMsg = " 'prefectures' field not found in Covid19 data response!";
-            return false;
-        }
-
-        $covid = (object)[];
-        if (isset($json->updated)) {
-            $covid->updated = $json->updated;
-        }
-
-        foreach ($json->prefectures as $prefecture) {
-            if ($prefecture->name === $this->prefecture || $prefecture->name_ja === $this->prefecture) {
-                $covid->confirmed = $prefecture->confirmed;
-                $covid->newlyConfirmed = $prefecture->newlyConfirmed;
-                $covid->recovered = $prefecture->recovered;
-                $covid->critical = $prefecture->critical;
-                $covid->deaths = $prefecture->deaths;
-                $this->covid19 = $covid;
-            }
-        }
-    }
-
-    // extruct API response from WeatherBit
+    
+    /**
+    * extract API response from WeatherBit
+    * @param string $json This parameter should contain json string of API response
+    *
+    * @return boolean 
+    */
     private function extractWeatherBitResult($json)
     {
         // check main data field
@@ -180,7 +224,12 @@ class Area
         return true;
     }
 
-    // extruct API response from OpenWeatherMap
+    /**
+    * extract API response from OpenWeatherMap
+    * @param string $json This parameter should contain json string of API response
+    *
+    * @return boolean 
+    */
     private function extractOpenWeatherMapResult($json)
     {
         // check response status field
@@ -268,7 +317,12 @@ class Area
         return true;
     }
 
-    // extract API response from Google geocoding
+    /**
+    * extract API response from Google geocoding
+    * @param string $json This parameter should contain json string of API response
+    *
+    * @return boolean 
+    */
     private function extractGoogleResult($json)
     {
         // check status field has received
@@ -316,8 +370,13 @@ class Area
         }       
         return true;
     }
-
-    // extract API response from Yahoo geocoding
+    
+    /**
+    * extract API response from Yahoo geocoding
+    * @param string $json This parameter should contain json string of API response
+    *
+    * @return boolean 
+    */
     private function extractYahooResult($json)
     {
         // check result status field has received
@@ -364,7 +423,59 @@ class Area
         }
         return true;
     }
-    // display static (image) map using Google Map API
+
+    /**
+    * call url to get Covid19 latest data
+    *
+    * @return boolean 
+    */ 
+    public function getCovid19data()
+    {
+        // if prefecture is not found from location, don't process covid19 data
+        if ($this->prefecture ==='') {
+            return false;
+        }
+        // url to get covid19 json data
+        $url = 'https://data.covid19japan.com/summary/latest.json';
+        $result = $this->callAPI($url);
+        return $result ? $this->extractCovid19Result(json_decode($result)) : false;
+    }
+
+    /**
+    * extract covid19 data
+    *
+    * @return void 
+    */ 
+    private function extractCovid19Result($json)
+    {
+        // check main data field "prefectures"
+        if (!isset($json->prefectures)) {
+            $this->errorMsg = " 'prefectures' field not found in Covid19 data response!";
+            return false;
+        }
+
+        $covid = (object)[];
+        if (isset($json->updated)) {
+            $covid->updated = $json->updated;
+        }
+
+        foreach ($json->prefectures as $prefecture) {
+            if ($prefecture->name === $this->prefecture || $prefecture->name_ja === $this->prefecture) {
+                $covid->confirmed = $prefecture->confirmed;
+                $covid->newlyConfirmed = $prefecture->newlyConfirmed;
+                $covid->recovered = $prefecture->recovered;
+                $covid->critical = $prefecture->critical;
+                $covid->deaths = $prefecture->deaths;
+                $this->covid19 = $covid;
+            }
+        }
+    }
+
+    /**
+    * display static (image) map using Google Map API
+    *
+    * @return void 
+    */
     private function showStaticMap()
     {
         if ($this->location !== '') {
@@ -377,10 +488,15 @@ class Area
             $mapurl .= "&key=AIzaSyClGnGQXaKd9jInTwtjo0D-Cb1YK1hLQp4";
             return "<img src=" . $mapurl . " >";
         } else {
-            return "<p>Location not specified!</p>";
+            return "";
         }
     }
-    // display dynamic (embed) map using Google Map API
+
+    /**
+    * display dynamic (embed) map using Google Map API
+    *
+    * @return void 
+    */
     private function showEmbedMap()
     {
         if ($this->location !== '') {
@@ -398,18 +514,27 @@ class Area
             $map .= '</iframe>';
             return $map;
         } else {
-            return "<p>Location not specified!</p>";
+            return "";
         }
     }
 
-    // Location name getter
+    /**
+    * get location name 
+    *
+    * @return string 
+    */
     public function getName()
     {
         return $this->name;
     }
 }
 
-// execution starts here
+/**
+* Execution starts here
+* 
+*/
+
+// check submit request or not
 if (isset($_POST['Submit']) && isset($_POST['postcode'])) {
     // global variable used to display location data
     $area = new Area();
@@ -422,8 +547,8 @@ if (isset($_POST['Submit']) && isset($_POST['postcode'])) {
               // get Covid19 latest data
               $area->getCovid19data();
           }
-      }
-  }
+    }
+}
 
 ?>
 <!DOCTYPE html>
