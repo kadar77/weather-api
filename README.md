@@ -1,5 +1,5 @@
 ## Weather forecast 
-This program is Weather forecast web application for coding assisment.
+This program is Weather forecast web application for coding assignment.
 You can redistribute it and/or modify except api keys.
  
 ## Flow
