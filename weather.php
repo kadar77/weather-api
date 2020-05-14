@@ -491,7 +491,7 @@ class Area
             $mapurl .= "&zoom=15";      // zoom to town level
             // put marker center of the location
             $mapurl .= "&markers=|" . $this->location->lat . "," . $this->location->lng;  
-            $mapurl .= "&key=AIzaSyClGnGQXaKd9jInTwtjo0D-Cb1YK1hLQp4";
+            $mapurl .= "&key=" . $GLOBALS['apikey_googlemap'];
             return "<img src=" . $mapurl . " >";
         } else {
             return "";
@@ -509,7 +509,7 @@ class Area
             $mapurl = "https://www.google.com/maps/embed/v1/view";
             $mapurl .= "?center=" . $this->location->lat . "," . $this->location->lng;
             $mapurl .= "&zoom=15"; // zoom to town level
-            $mapurl .= "&key=AIzaSyClGnGQXaKd9jInTwtjo0D-Cb1YK1hLQp4";
+            $mapurl .= "&key=" . $GLOBALS['apikey_googlemap'];;
             
             // iframe params to embed on the web page
             $map = '<iframe ';
