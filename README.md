@@ -1,7 +1,9 @@
 ## Weather forecast 
 This program is Weather forecast web application for coding assignment.
-You can redistribute it and/or modify except api keys.
- 
+You can redistribute it and/or modify.
+
+Replace the api keys and run.
+
 ## Flow
 
 - Search location by postcode (japan only) using Geocoding API Google/Yahoo 
@@ -38,4 +40,4 @@ You can redistribute it and/or modify except api keys.
 
 ### Requirement
 
-Web server with PHP 7.3
+Web server with PHP 7.3, curl

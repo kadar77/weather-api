@@ -33,11 +33,17 @@
  * 
  * Author: Enkhbaatar
  *
- * @file
+ * @file weather.php
  */
 
 // global variable to be used to store and display data
 $area = null;
+
+// api keys
+$apikey_googlemap = "your_api_key";
+$apikey_yahooapis = "your_api_key";
+$apikey_openweathermap = "your_api_key";
+$apikey_weatherbit = "your_api_key";
 
 /**
  * Class to get and store data for APIs
@@ -124,7 +130,7 @@ class Area
         $url = 'https://maps.googleapis.com/maps/api/geocode/json';   // api url
         $url .= '?address=' . $this->postcode;    // postcode to search
         $url .= '&components=country:JP';   // filter by country Japan to prevent from ambiguos results
-        $url .= '&key=AIzaSyClGnGQXaKd9jInTwtjo0D-Cb1YK1hLQp4';  // api key
+        $url .= '&key=' . $GLOBALS['apikey_googlemap'];  // api key
         $result = $this->callAPI($url);
         // call function to extract api response 
         return $result ? $this->extractGoogleResult(json_decode($result)) : false;
@@ -142,7 +148,7 @@ class Area
         $url .= '&output=json';    // output format. Can be json or xml. Used json format.  
         $url .= '&detail=full';    // to get complete location name
         $url .= '&zkind=0';   // zipcode type. 0 = town
-        $url .= '&appid=dj00aiZpPW9LY3FPUFNsRlczaCZzPWNvbnN1bWVyc2VjcmV0Jng9NDM-';
+        $url .= '&appid=' . $GLOBALS['apikey_yahooapis'];
         $result = $this->callAPI($url);
         // call function to extract api response
         return $result ? $this->extractYahooResult(json_decode($result)) : false;
@@ -161,7 +167,7 @@ class Area
         $url .= '&lon=' . $this->location->lng;
         $url .= '&units=' . ($this->unit === "FAHRENHEIT" ? "I" : "M");
         $url .= '&days=3';   // default return 16 days forecast. Using forecast of 3 days.
-        $url .= '&key=1180be8a4c8b4bd78ce746724cfedc86';
+        $url .= '&key=' . $GLOBALS['apikey_weatherbit'];
         $result = $this->callAPI($url);
         return $result ? $this->extractWeatherBitResult(json_decode($result)) : false;
     }
@@ -178,7 +184,7 @@ class Area
         $url .= '?lat=' . $this->location->lat;
         $url .= '&lon=' . $this->location->lng;
         $url .= '&units=' . ($this->unit === "FAHRENHEIT" ? "imperial" : "metric");
-        $url .= '&appid=3dbdd2e728039fc39e8563321d79b398';
+        $url .= '&appid=' . $GLOBALS['apikey_openweathermap'];
         $result = $this->callAPI($url);
         return $result ? $this->extractOpenWeatherMapResult(json_decode($result)) : false;
     }
